@@ -22,7 +22,7 @@ async function refresh(currPage) {
   try {
     let expPerPage = localStorage.getItem("ExpPerPage");
     let getExpenses = await axios.get(
-      `http://localhost:3000/expense/getExpenses?page=${currPage}&expPerPage=${expPerPage}`,
+      `http://13.126.34.251:3000/expense/getExpenses?page=${currPage}&expPerPage=${expPerPage}`,
       { headers: { Authorization: token } }
     );
     if (getExpenses.data.ispremiumuser == true) {
@@ -63,7 +63,7 @@ async function afterPremium() {
 async function leaderboard() {
   try {
     const userLeaderBoardArr = await axios.get(
-      "http://localhost:3000/premium/showLeaderBoard",
+      "http://13.126.34.251:3000/premium/showLeaderBoard",
       { headers: { Authorization: token } }
     );
 
@@ -79,9 +79,12 @@ async function leaderboard() {
 
 async function downloadexp() {
   try {
-    const download = await axios.get("http://localhost:3000/expense/download", {
-      headers: { Authorization: token },
-    });
+    const download = await axios.get(
+      "http://13.126.34.251:3000/expense/download",
+      {
+        headers: { Authorization: token },
+      }
+    );
     if (download.status === 200) {
       // backend is sending a download link, if we open that link in browser our file would be downloaded
       var a = document.createElement("a");
@@ -97,9 +100,12 @@ async function downloadexp() {
 }
 
 async function showPrevFileData() {
-  let allfiles = await axios.get("http://localhost:3000/expense/showFiles", {
-    headers: { Authorization: token },
-  });
+  let allfiles = await axios.get(
+    "http://13.126.34.251:3000/expense/showFiles",
+    {
+      headers: { Authorization: token },
+    }
+  );
 
   allfiles.data.contenturl.forEach((url) => {
     showAllDownloadedFiles(url);
@@ -171,7 +177,7 @@ async function getExpenses(page) {
   try {
     let expPerPage = localStorage.getItem("ExpPerPage");
     const getExpensesPerPage = await axios.get(
-      `http://localhost:3000/expense/getExpenses?page=${page}&expPerPage=${expPerPage}`,
+      `http://13.126.34.251:3000/expense/getExpenses?page=${page}&expPerPage=${expPerPage}`,
       { headers: { Authorization: token } }
     );
 
@@ -192,7 +198,7 @@ async function onAddExpense(e) {
     };
 
     let newExpense = await axios.post(
-      "http://localhost:3000/expense/addExpense",
+      "http://13.126.34.251:3000/expense/addExpense",
       obj,
       { headers: { Authorization: token } }
     );
@@ -217,9 +223,12 @@ function showNewExpOnScreen(expense) {
 
 async function deleteExp(expID) {
   try {
-    await axios.delete(`http://localhost:3000/expense/deleteExpense/${expID}`, {
-      headers: { Authorization: token },
-    });
+    await axios.delete(
+      `http://13.126.34.251:3000/expense/deleteExpense/${expID}`,
+      {
+        headers: { Authorization: token },
+      }
+    );
 
     removeExpFromScreen(expID);
   } catch (err) {
@@ -233,9 +242,12 @@ async function editExp(expID, amount, category, description) {
     document.getElementById("category").value = category;
     document.getElementById("description").value = description;
 
-    await axios.delete(`http://localhost:3000/expense/deleteExpense/${expID}`, {
-      headers: { Authorization: token },
-    });
+    await axios.delete(
+      `http://13.126.34.251:3000/expense/deleteExpense/${expID}`,
+      {
+        headers: { Authorization: token },
+      }
+    );
 
     removeExpFromScreen(expID);
   } catch (err) {
@@ -254,7 +266,7 @@ function removeExpFromScreen(expID) {
 document.getElementById("rzp-btn").onclick = async (e) => {
   try {
     const response = await axios.get(
-      "http://localhost:3000/purchase/premiumMembership",
+      "http://13.126.34.251:3000/purchase/premiumMembership",
       { headers: { Authorization: token } }
     );
 
@@ -264,7 +276,7 @@ document.getElementById("rzp-btn").onclick = async (e) => {
       // this handler function will handle the success payment
       handler: async (response) => {
         await axios.post(
-          "http://localhost:3000/purchase/updateTransactionStatus",
+          "http://13.126.34.251:3000/purchase/updateTransactionStatus",
           {
             order_id: options.order_id,
             payment_id: response.razorpay_payment_id,
@@ -282,7 +294,7 @@ document.getElementById("rzp-btn").onclick = async (e) => {
 
     rzp1.on("payment.failed", async function (response) {
       await axios.post(
-        "http://localhost:3000/purchase/updateTransactionStatus",
+        "http://13.126.34.251:3000/purchase/updateTransactionStatus",
         {
           order_id: options.order_id,
         },

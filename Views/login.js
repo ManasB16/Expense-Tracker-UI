@@ -7,7 +7,10 @@ async function onlogin(e) {
       password: e.target.password.value,
     };
 
-    let login = await axios.post("http://localhost:3000/user/login", loginuser);
+    let login = await axios.post(
+      "http://13.126.34.251:3000/user/login",
+      loginuser
+    );
     alert(login.data.message);
     localStorage.setItem("token", login.data.token);
     window.location.href = "expense.html";

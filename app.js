@@ -8,9 +8,6 @@ require("dotenv").config();
 
 const app = express();
 var cors = require("cors");
-const helmet = require("helmet");
-const compression = require("compression");
-const morgan = require("morgan");
 
 const accessLogStream = fs.createWriteStream(
   path.join(__dirname, "access.log"),
@@ -18,9 +15,6 @@ const accessLogStream = fs.createWriteStream(
 );
 
 app.use(cors());
-app.use(helmet());
-app.use(compression());
-app.use(morgan("combined", { stream: accessLogStream }));
 
 const userRoute = require("./routes/user");
 const expenseRoute = require("./routes/expense");
@@ -41,6 +35,10 @@ app.use("/expense", expenseRoute);
 app.use("/purchase", purchaseRoute);
 app.use("/premium", premiumRoute);
 app.use("/password", passwordRoute);
+app.use((req, res) => {
+  console.log(req.url);
+  res.sendFile(path.join(__dirname, `Views/${req.url}`));
+});
 
 User.hasMany(Expense);
 Expense.belongsTo(User);

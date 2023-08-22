@@ -5,7 +5,7 @@ async function sendemail(e) {
       email: e.target.email.value,
     };
     let Email = await axios.post(
-      "http://localhost:3000/password/forgotpassword",
+      "http://13.126.34.251:3000/password/forgotpassword",
       email
     );
     alert("Check your email");
