@@ -8,7 +8,7 @@ async function signup(e) {
       password: e.target.password.value,
     };
 
-    let post = await axios.post("http://13.126.34.251:3000/user/signup", user);
+    let post = await axios.post("http://localhost:3000/user/signup", user);
     window.location.href = "login.html";
   } catch (err) {
     document.body.innerHTML += `<p>User Alreay Exists ${err}</p>`;

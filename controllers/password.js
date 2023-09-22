@@ -7,10 +7,13 @@ const Forgotpassword = require("../models/ForgotPassword");
 const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ where: { email } });
-    const id = uuid.v4();
+    const user = await User.findOne({ email: email });
+    // const id = uuid.v4();
     if (user) {
-      user.createForgotPassword({ id: id, isactive: true });
+      const resetReq = await Forgotpassword.create({
+        isactive: true,
+        userId: user._id,
+      });
 
       const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -25,7 +28,7 @@ const forgotPassword = async (req, res, next) => {
         to: email, // list of receivers
         subject: "Donty worry we will help you get a new password", // Subject line
         text: "Hello world?", // plain text body
-        html: `<a href="http://13.126.34.251:3000/password/resetpassword/${id}">Reset Password</a>`, // html body
+        html: `<a href="http://localhost:3000/password/resetpassword/${resetReq._id}">Reset Password</a>`, // html body
       });
       console.log("Message sent: %s", info.messageId);
       res.json(info);
@@ -41,11 +44,9 @@ const forgotPassword = async (req, res, next) => {
 const resetPassword = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const findreq = await Forgotpassword.findOne({
-      where: { id: id, isactive: true },
-    });
+    const findreq = await Forgotpassword.findById(id);
     if (findreq) {
-      findreq.update({ isactive: false });
+      await findreq.updateOne({ isactive: false });
       res.status(200).send(`<html>
                                     <script>
                                         function formsubmitted(e){
@@ -54,7 +55,7 @@ const resetPassword = async (req, res, next) => {
                                         }
                                     </script>
 
-                                    <form action="/password/updatepassword/${id}" method="get">
+                                    <form action="/password/updatepassword/${findreq._id}" method="get">
                                         <label for="newpassword">Enter New password</label>
                                         <input name="newpassword" type="password" required></input>
                                         <button>reset password</button>
@@ -72,10 +73,8 @@ const updatePassword = async (req, res, next) => {
   try {
     const { newpassword } = req.query;
     const { resetpasswordid } = req.params;
-    const resetreq = await Forgotpassword.findOne({
-      where: { id: resetpasswordid },
-    });
-    const user = await User.findOne({ where: { id: resetreq.userId } });
+    const resetreq = await Forgotpassword.findById(resetpasswordid);
+    const user = await User.findById(resetreq.userId);
     if (user) {
       const saltRounds = 10;
       bcrypt.hash(newpassword, saltRounds, async (err, hash) => {
@@ -83,7 +82,7 @@ const updatePassword = async (req, res, next) => {
           console.log(err);
           throw new Error(err);
         }
-        await user.update({ password: hash });
+        await user.updateOne({ password: hash });
         res
           .status(201)
           .json({ message: "Successfuly update the new password" });

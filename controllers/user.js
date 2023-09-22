@@ -47,7 +47,7 @@ const postLogin = async (req, res, next) => {
       return res.status(400).json({ err: "Something is missing" });
     }
 
-    let user = await User.findAll({ where: { email: email } });
+    let user = await User.find({ email: email });
     if (user.length > 0) {
       bcrypt.compare(password, user[0].password, async (err, result) => {
         if (err) {

@@ -8,7 +8,6 @@ const uploadToS3 = async (data, filename) => {
   let s3bucket = new AWS.S3({
     accessKeyId: IAM_USER_KEY,
     secretAccessKey: IAM_USER_SECRET,
-    // Bucket: BUCKET_NAME,
   });
 
   var params = {

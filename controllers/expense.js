@@ -1,19 +1,23 @@
+// const sequelize = require("../util/database");
+// const UserServices = require("../services/userservices");
+const mongoose = require("mongoose");
 const Expense = require("../models/Expense");
 const Content = require("../models/Content");
-const sequelize = require("../util/database");
-const UserServices = require("../services/userservices");
 const S3Services = require("../services/S3services");
 
 const getExp = async (req, res, next) => {
   try {
     const ITEM_PER_PAGE = Number(req.query.expPerPage);
     const page = Number(req.query.page);
-    const totalItems = await Expense.count({ where: { userId: req.user.id } });
-    const expPerPage = await Expense.findAll({
-      offset: (page - 1) * ITEM_PER_PAGE,
-      limit: ITEM_PER_PAGE,
-      where: { userId: req.user.id },
+    const totalItems = await Expense.countDocuments({
+      userId: req.user._id,
     });
+    const expPerPage = await Expense.find({
+      userId: req.user._id,
+    })
+      .skip((page - 1) * ITEM_PER_PAGE)
+      .limit(ITEM_PER_PAGE)
+      .sort({ _id: -1 });
 
     if (req.user.ispremiumuser == 1) {
       res.status(200).json({
@@ -47,25 +51,20 @@ const getExp = async (req, res, next) => {
 
 const addExp = async (req, res, next) => {
   try {
-    const t = await sequelize.transaction();
     const { amount, description, category } = req.body;
-    const newExp = await req.user.createExpense(
-      {
-        amount,
-        description,
-        category,
-      },
-      { transaction: t }
-    );
-    req.user.totalExp += parseInt(amount);
-    req.user.update({
-      totalExp: req.user.totalExp,
-      transaction: t,
+    const newExp = await Expense.create({
+      amount,
+      category,
+      description,
+      userId: req.user._id,
     });
-    await t.commit();
+    let totalexp = Number(req.user.totalExp) + Number(amount);
+    // console.log("totalexp>>>>>>>>>>>>>>>>>", totalexp);
+    await req.user.updateOne({
+      totalExp: totalexp,
+    });
     res.status(201).json({ newExp, success: true });
   } catch (err) {
-    await t.rollback();
     console.log(err);
     res.status(500).json({
       error: err,
@@ -74,32 +73,26 @@ const addExp = async (req, res, next) => {
 };
 
 const delExp = async (req, res, next) => {
-  const t = await sequelize.transaction();
   try {
-    const uId = req.params.expID;
-    const todelExp = await Expense.findOne({ where: { id: uId } });
+    const expId = req.params.expID;
+    // console.log(expId);
+    const todelExp = await Expense.findById(expId);
 
-    req.user.totalExp -= todelExp.amount;
-    req.user.update({
-      totalExp: req.user.totalExp,
-      transaction: t,
+    const totalexp = Number(req.user.totalExp) - Number(todelExp.amount);
+    await req.user.updateOne({
+      totalExp: totalexp,
     });
 
-    const destroy = await Expense.destroy(
-      {
-        where: { id: uId, userId: req.user.id },
-      },
-      { transaction: t }
-    );
+    const destroy = await todelExp.deleteOne();
+    // console.log(destroy);
     if (destroy === 0) {
       return res
         .status(401)
         .json({ success: false, message: "Expense doesnt belong to User" });
     }
-    await t.commit();
+
     res.status(200).json({ success: true, message: "Deleted Successfully" });
   } catch (err) {
-    await t.rollback();
     res.status(500).json({
       error: err,
     });
@@ -108,9 +101,9 @@ const delExp = async (req, res, next) => {
 
 const downloadexp = async (req, res, next) => {
   try {
-    const expenses = await UserServices.getExpenses(req);
+    const userid = req.user._id;
+    const expenses = await Expense.find({ userId: userid });
     const stringifiedExp = JSON.stringify(expenses);
-    const userid = req.user.id;
     const filename = `Expenses${userid}/${new Date()}.txt`;
     const fileURL = await S3Services.uploadToS3(stringifiedExp, filename); // this func will return a url in the end which we will send to front end
     await Content.create({
@@ -127,8 +120,8 @@ const downloadexp = async (req, res, next) => {
 
 const showDownloadedFiles = async (req, res, next) => {
   try {
-    const userid = req.user.id;
-    const contenturl = await Content.findAll({ where: { userId: userid } });
+    const userid = req.user._id;
+    const contenturl = await Content.find({ userId: userid });
     res.status(200).json({ contenturl });
   } catch (err) {
     res.status(500).json({
@@ -144,4 +137,3 @@ module.exports = {
   downloadexp,
   showDownloadedFiles,
 };
-
